@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Tippy",
+  name: "TransFlex",
   description: "Fund your favourite creators",
   navItems: [
     {

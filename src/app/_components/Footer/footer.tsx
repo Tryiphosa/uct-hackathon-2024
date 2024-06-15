@@ -10,7 +10,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
       className={` ${backgroundColor} fixed bottom-0 flex w-full flex-row items-center justify-between rounded-none px-4 py-4 md:px-20`}
     >
       <div className="flex w-full items-center justify-start space-x-4 md:block md:w-auto">
-        <Link isExternal href={siteConfig.links.twitter} aria-label="Twitter">
+        {/*   <Link isExternal href={siteConfig.links.twitter} aria-label="Twitter">
           <FaTwitter className="text-default-900" />
         </Link>
         <Link isExternal href={siteConfig.links.slack} aria-label="Slack">
@@ -27,6 +27,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
         <Button color="primary" size="md" variant="flat">
           Terms of Service
         </Button>
+     */}
       </div>
     </Card>
   );

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
-import Container from "../../_components/Container/container";
+import Container from "../_components/Container/container";
 import {
   Button,
   CardBody,
@@ -20,11 +20,11 @@ import {
 import { Card } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { api } from "$/src/trpc/react";
-import { FaCheck, FaLock, FaSpinner } from "react-icons/fa";
+import { FaCheck, FaLock, FaShoppingBasket, FaSpinner } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
-import WalletAddressDetails from "../../_components/OpenPayments/walletAddressDetails";
-import IncomingPaymentDetails from "../../_components/OpenPayments/incomingPaymentDetails";
-import QuoteDetails from "../../_components/OpenPayments/quoteDetails";
+import WalletAddressDetails from "../_components/OpenPayments/walletAddressDetails";
+import IncomingPaymentDetails from "../_components/OpenPayments/incomingPaymentDetails";
+import QuoteDetails from "../_components/OpenPayments/quoteDetails";
 
 /**
  * Types
@@ -39,7 +39,7 @@ type paymentStep = {
   action: () => void;
 };
 
-export default function Campaign({ params }: { params: { id: string } }) {
+export default function Checkout({ params }: { params: { id: string } }) {
   /**
    * Hooks
    * Hooks are functions that let you access (hook into) the React state
@@ -50,7 +50,9 @@ export default function Campaign({ params }: { params: { id: string } }) {
   const [step, setStep] = useState(0);
   const [donation, setDonation] = React.useState("");
   const [senderWalletAddress, setWalletAddress] = React.useState("");
-
+  const [finalAmount, setFinalAmount] = React.useState("");
+  const [vendorWalletAddress, setVendorWalletAddress] = React.useState("");
+  const [vendorName, setVendorName] = React.useState("");
   const [refetchIncomePayment, setRefetchIncomePayment] = React.useState(false);
   const [refetchQoute, setRefetchQoute] = React.useState(false);
 
@@ -73,13 +75,10 @@ export default function Campaign({ params }: { params: { id: string } }) {
   });
 
   // tRPC Query hooks - Hooks provided by tRPC to query the API procedures on the server
-  const campaign = api.campaigns.getOne.useQuery({
-    id: params.id ?? "",
-  });
 
   const receiverWalletDetails = api.openPayments.getWalletDetails.useQuery(
     {
-      walletAddress: campaign.data?.walletAddress ?? "",
+      walletAddress: vendorWalletAddress ?? "",
     },
     { enabled: false },
   );
@@ -94,8 +93,8 @@ export default function Campaign({ params }: { params: { id: string } }) {
   const incomingPayment = api.openPayments.createIncomingPayment.useQuery(
     {
       walletAddress: senderWalletAddress,
-      receiverAddress: campaign.data?.walletAddress ?? "",
-      value: donation,
+      receiverAddress: vendorWalletAddress,
+      value: finalAmount,
     },
     { enabled: false },
   );
@@ -146,6 +145,12 @@ export default function Campaign({ params }: { params: { id: string } }) {
   // The empty array makes sure this is called on the initial render only and not on subsequent ones
   useEffect(() => {
     const interactRef = searchParams.get("interact_ref");
+
+    // setting the parameters for checkout
+    setVendorWalletAddress(searchParams.get("vendorWalletAddress") ?? "");
+    setVendorName(searchParams.get("vendorName") ?? "");
+    setFinalAmount(searchParams.get("finalAmount") ?? "");
+
     const continueAccessToken = localStorage.getItem("continueAccessToken");
     const continueUri = localStorage.getItem("continueUri");
     const walletAddress = localStorage.getItem("walletAddress");
@@ -257,19 +262,20 @@ export default function Campaign({ params }: { params: { id: string } }) {
     onOpen();
   }
 
+  function formatWalletAddress(walletAddress: string) {
+    if (walletAddress.startsWith("$"))
+      walletAddress = walletAddress.replace("$", "https://");
+
+    return walletAddress;
+  }
+
   return (
     <Container className="flex flex-col items-center">
       <Card isBlurred className="w-9/12 border-none" shadow="sm">
         <CardBody>
           <div className="grid grid-cols-6 items-center justify-center gap-6 md:grid-cols-12 md:gap-4">
-            <div className=" col-span-6 md:col-span-4">
-              <Image
-                alt="Campaign image"
-                className="h-96 object-cover"
-                shadow="md"
-                src={campaign.data?.imageUrl ? campaign.data.imageUrl : ""}
-                width="100%"
-              />
+            <div className="col-span-6 flex flex-col items-center md:col-span-4">
+              <FaShoppingBasket size={150} />
             </div>
 
             <form
@@ -278,36 +284,20 @@ export default function Campaign({ params }: { params: { id: string } }) {
             >
               <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-0">
-                  <h1 className="font-semibold text-foreground/90">
-                    {campaign.data?.title}
-                  </h1>
-                  <h3 className="text-foreground/80">
-                    R {campaign.data?.amount}
-                  </h3>
-                  <Snippet symbol="" color="primary">
+                  <h3 className="text-foreground/80">Vendor: {vendorName}</h3>
+                  {/*<Snippet symbol="" color="primary">
                     {window.location.href}
-                  </Snippet>
-                  <p className="text-md mt-2 ">{campaign.data?.about}</p>
+                  </Snippet>*/}
                 </div>
               </div>
 
               <div className="mt-3 flex flex-col gap-4">
                 <Input
-                  name="walletAddress"
-                  className="text-sm"
-                  label="Pay From"
-                  placeholder="Enter Your Wallet Address"
-                  value={senderWalletAddress}
-                  onValueChange={setWalletAddress}
-                  color="primary"
-                  required
-                />
-                <Input
                   name="receiverAddress"
                   className="text-sm"
                   label="Pay To"
                   placeholder="Open payment address to donate to"
-                  value={campaign.data?.walletAddress}
+                  value={vendorWalletAddress}
                   color="danger"
                   disabled
                 />
@@ -318,8 +308,21 @@ export default function Campaign({ params }: { params: { id: string } }) {
                   startContent={senderWalletDetails.data?.data.assetCode}
                   label="amount"
                   placeholder="Amount being sent"
-                  value={donation}
+                  value={finalAmount}
                   onValueChange={setDonation}
+                  disabled
+                />
+
+                <Input
+                  name="walletAddress"
+                  className="text-sm"
+                  label="Pay From"
+                  placeholder="Enter Your Wallet Address"
+                  value={senderWalletAddress}
+                  onValueChange={(walletAddress) => {
+                    setWalletAddress(formatWalletAddress(walletAddress));
+                  }}
+                  color="primary"
                   required
                 />
               </div>
@@ -332,7 +335,7 @@ export default function Campaign({ params }: { params: { id: string } }) {
                   color="primary"
                   type="submit"
                 >
-                  Donate
+                  Proceed with payment
                 </Button>
               </div>
             </form>

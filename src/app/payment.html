@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pick n Pay Payment Gateway</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="payment-page">
+      <img src="pnp-logo.png" alt="Pick n Pay Logo" class="logo" />
+      <h1>Pick n Pay Payment Gateway</h1>
+      <form
+        id="paymentForm"
+        action="http://localhost:3000/checkout?finalAmount=1400&vendor=sf"
+        method="GET"
+      >
+        <input type="number" name="finalAmount" placeholder="Amount" required />
+        <input type="text" name="vendor" placeholder="Vendor Name" required />
+        <div>
+          <label for="amount">Amount:</label>
+          <input
+            type="number"
+            id="amount"
+            name="amount"
+            placeholder="Enter amount"
+            required
+            readonly
+          />
+        </div>
+        <div>
+          <label for="paymentMethod">Payment Method:</label>
+          <select id="paymentMethod" name="paymentMethod">
+            <option value="transflex">Transflex</option>
+            <option value="credit_card">Credit Card</option>
+            <option value="paypal">PayPal</option>
+            <option value="debit_card">Debit Card</option>
+            <option value="eft">EFT</option>
+            <option value="crypto">CRYPTO</option>
+            <!-- Add more payment methods here if needed -->
+          </select>
+        </div>
+        
+        <button type="submit"> <Link
+            isExternal
+            href={/checkout?finalAmount=1400&vendorName=picknpay&vendorWalletAddress=rafiki.money%2Fpnp}
+            className="text-base font-semibold text-white"
+          >
+        
+            Pay Now
+          </Link></button>
+        
+
+      </form>
+      <p id="message"></p>
+    </div>
+  </body>
+</html>
